@@ -1,0 +1,334 @@
+<!DOCTYPE html><html><head>
+    <title>T-REX RUNNER</title>
+    <link rel = "icon" href = "trexcolor1.png" type = "image/x-icon">
+    <script src="p5.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="p5.dom.min.js"></script>
+    <script src="p5.sound.min.js"></script>
+<script src="./p5.play.js"></script>
+    <!--<link rel="stylesheet" type="text/css" href="style.css">-->
+    <meta charset="utf-8">
+   <style>
+       html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color:#F7F7F7;
+}
+canvas {
+  position: absolute;
+  top: 35%;
+  left: 24%;
+  transform: translateY(-65%);
+  display: block;
+  background-color:#F7F7F7;
+  
+}
+canvas:nth-child(1) {
+  position: absolute;
+  top: 55%;
+  left: 24%;
+  transform: translateY(-65%);
+  display: block;
+  background-color:#F7F7F7;
+  
+}
+.credits
+{
+   position: absolute;
+   top: 60%;
+   left: 18%;
+   font-size: 25px;
+   color:#222;
+}
+.inst
+{
+  position: absolute;
+  top: 70%;
+  left: 27%;
+  font-size: 20px;
+  color: #333;
+  width: 600px;
+  text-align: center;
+}
+.reset
+{
+  color: #222;
+}
+.luck
+{
+  color: #ff00ff;
+  filter: opacity(80%);
+}
+.upgrade
+{
+  position: absolute;
+  top: 85%;
+  left: 41%;
+  color: rgb(255, 5, 5);
+  font: 20px;
+
+}
+   </style>
+  </head>
+  <body>
+      <!--<script src="sketch.js"></script>-->
+    <script>
+        // NORMAL CODE
+        $(document).bind("contextmenu",function(e){
+  return false;
+  swal("T-REX SAYS", "...Access Prohibited!");
+    });
+
+  
+    document.onkeydown = function(e) {
+            if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 86 || e.keyCode === 85 || e.keyCode === 117)) {//Alt+c, Alt+v will also be disabled sadly.
+                //alert('Access Prohibited');
+                swal("T-REX SAYS", "...Access Prohibited!");
+            }
+            return false;
+    };
+ /* function check(e)
+    {
+    alert(e.keyCode);
+    }*/
+   
+    // TREX RUNNER BEGINS
+
+
+    var PLAY = 1;
+var END = 0;
+var gameState = PLAY;
+
+var trex, trex_running, trex_collided;
+var ground, invisibleGround, groundImage, invisibleRoof;
+
+var cloudsGroup, cloudImage;
+var obstaclesGroup, obstacle1, obstacle2, obstacle3, obstacle4, obstacle5, obstacle6;
+
+var score=0;
+
+var gameOver, restart;
+
+localStorage["HighestScore"] = 0;
+
+function preload(){
+  score_hundred = loadSound("100.mp3");
+  jump = loadSound("jump.mp3");
+  death = loadSound("death.mp3");
+  trex_running =   loadAnimation("trexcolor3.png","trexcolor4.png");
+ 
+  trex_collided = loadAnimation("trexcolorcollided.png");
+  
+  groundImage = loadImage("groundcolor.png");
+  trex_up = loadAnimation("trexcolor1.png");
+  cloudImage = loadImage("cloudblue.png");
+  
+  obstacle1 = loadImage("obstacle1green.png");
+  obstacle2 = loadImage("obstacle2green.png");
+  obstacle3 = loadImage("obstacle3green.png");
+  obstacle4 = loadImage("obstacle4green.png");
+  obstacle5 = loadImage("obstacle5green.png");
+  obstacle6 = loadImage("obstacle6green.png");
+  
+  gameOverImg = loadImage("gameOver.png");
+  restartImg = loadImage("restart.png");
+
+}
+
+function setup() {
+  createCanvas(600, 200);
+  
+  
+  trex = createSprite(50,180,20,50);
+ 
+  trex.addAnimation("running", trex_running);
+  trex.addAnimation("collided", trex_collided);
+  trex.addAnimation("jumped", trex_up);
+  trex.scale = 0.5;
+  
+  ground = createSprite(200,180,400,20);
+  ground.addImage("ground",groundImage);
+  ground.x = ground.width /2;
+  ground.velocityX = -(6 + 3*score/100);
+  
+  gameOver = createSprite(300,100);
+  gameOver.addImage(gameOverImg);
+  
+  restart = createSprite(300,140);
+  restart.addImage(restartImg);
+  
+  gameOver.scale = 0.5;
+  restart.scale = 0.5;
+
+  gameOver.visible = false;
+  restart.visible = false;
+  
+  invisibleGround = createSprite(200,190,400,10);
+  invisibleGround.visible = false; //setting visibility of invis ground
+  invisibleRoof = createSprite(200,40,400,10); //creating invisible roof
+  invisibleRoof.visible = false; // setting visibility of invis roof
+
+  cloudsGroup = new Group();
+  obstaclesGroup = new Group();
+  
+  score = 0;
+}
+
+function draw() {
+  //trex.debug = true;
+  background(255);
+  fill("#ff4800");
+  text("Score: "+ score, 500,50);
+
+  fill("#ff6016");
+  text("Highest Score: " + localStorage["HighestScore"], 400, 50);
+  if (gameState===PLAY){
+    score = score + Math.round(getFrameRate()/60);
+    ground.velocityX = -(9 + 3*score/100);
+    if(score % 100 == 0 && score >= 100)
+    {
+      score_hundred.play();
+    }
+
+    if( keyDown("Up_Arrow") && trex.y >= 161 ) {
+      trex.velocityY = -18.5;
+      trex.changeAnimation("jumped",trex_up);
+      jump.play();
+      
+    }
+    if( keyDown("Space") && trex.y >= 161 ) {
+      trex.velocityY = -18.5;
+      trex.changeAnimation("jumped",trex_up);
+      jump.play();
+    }
+    if(keyWentUp("space") || keyWentUp("Up_Arrow")) {
+      trex.changeAnimation("running", trex_running);
+    }
+  
+    trex.velocityY = trex.velocityY + 1.7
+  
+    if (ground.x < 0){
+      ground.x = ground.width/2;
+    }
+     
+    trex.collide(invisibleGround);
+    //trex.collide(invisibleRoof);
+    spawnClouds();
+    spawnObstacles();
+  
+    if(obstaclesGroup.isTouching(trex)){
+        gameState = END;
+        death.play();
+    }
+  }
+  else if (gameState === END) {
+    gameOver.visible = true;
+    restart.visible = true;
+    
+    //set velcity of each game object to 0
+    ground.velocityX = 0;
+    trex.velocityY = 0;
+    obstaclesGroup.setVelocityXEach(0);
+    cloudsGroup.setVelocityXEach(0);
+    
+    //change the trex animation
+    trex.changeAnimation("collided",trex_collided);
+    trex.setCollider("circle", -5, 2, 45);
+    trex.debug = false;
+    //set lifetime of the game objects so that they are never destroyed
+    obstaclesGroup.setLifetimeEach(-1);
+    cloudsGroup.setLifetimeEach(-1);
+    if(keyDown("Enter"))
+    {
+      reset();
+    }
+    if(mousePressedOver(restart)) {
+      reset();
+    }
+  }
+  
+  //console.log(trex.y);
+  drawSprites();
+}
+
+
+function spawnClouds() {
+  //write code here to spawn the clouds
+  if (frameCount % 10 === 0) {
+    var cloud = createSprite(600,120,40,10);
+    cloud.y = Math.round(random(80,120));
+    cloud.addImage(cloudImage);
+    cloud.scale = 0.5;
+    cloud.velocityX = -3;
+    
+     //assign lifetime to the variable
+    cloud.lifetime = 200;
+    
+    //adjust the depth
+    cloud.depth = trex.depth;
+    trex.depth = trex.depth + 1;
+    
+    //add each cloud to the group
+    cloudsGroup.add(cloud);
+  }
+  
+}
+
+function spawnObstacles() {
+  if(frameCount % 60 === 0) {
+    var obstacle = createSprite(600,165,10,40);
+    //obstacle.debug = true;
+    obstacle.velocityX = -(9 + 3*score/100);
+    
+    //generate random obstacles
+    var rand = Math.round(random(1,6));
+    switch(rand) {
+      case 1: obstacle.addImage(obstacle1);
+              break;
+      case 2: obstacle.addImage(obstacle2);
+              break;
+      case 3: obstacle.addImage(obstacle3);
+              break;
+      case 4: obstacle.addImage(obstacle4);
+              break;
+      case 5: obstacle.addImage(obstacle5);
+              break;
+      case 6: obstacle.addImage(obstacle6);
+              break;
+      default: break;
+    }
+    
+    //assign scale and lifetime to the obstacle           
+    obstacle.scale = 0.5;
+    obstacle.lifetime = 300;
+    //add each obstacle to the group
+    obstaclesGroup.add(obstacle);
+  }
+}
+
+function reset(){
+  gameState = PLAY;
+  gameOver.visible = false;
+  restart.visible = false;
+  
+  obstaclesGroup.destroyEach();
+  cloudsGroup.destroyEach();
+  
+  trex.changeAnimation("running",trex_running);
+  
+  if(localStorage["HighestScore"]<score){
+    localStorage["HighestScore"] = score;
+  }
+  console.log(localStorage["HighestScore"]);
+  
+  score = 0;
+  
+}
+
+    </script>
+<p class="credits"> This is a re-created version of Google's T-rex Runner by <strong> Circuit Overtime</strong></p>
+<p class="upgrade">Available for Only 1 Week </p>
+<p class="inst"> Press the Space Key or UP_ARROW (↑) to Jump. Try to escape the spawn island by doing parkour over the CACTI. Do not stumble over.. <br> <strong class="luck">Good Luck! </strong><br> <strong class="reset">Press Enter to Restart Again</strong></p>
+</body></html>
